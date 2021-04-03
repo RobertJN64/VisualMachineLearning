@@ -1,0 +1,20 @@
+Interactive Neural Net Grapher
+
+A python program for visualizing neural nets.
+
+Use:
+Enter neural net file name. Currently supports GeneticNets type. Tensorflow + PyTorch support will be added soon.
+Click 2 inputs from the input list on the control panel.
+Click at least 1 output from the output list on the output panel.
+The graph will appear in the window. (The red plane)
+
+Settings:
+Add data:
+Shows data points in blue.
+Data percents:
+Clumps data points and shows their values as a percent (-1 = 0%, 0 = 50%, 1 = 100%)
+Clump:
+Clumps data based on similar values + locations
+Colorization:
+Sets colorization for data points. Blue is default. When colorization mode is based on score, blue represents correct and black represents incorrect. Assumes simple-posi scoring.
+Can also colorize based on nn score, this identifies poor classification variables.

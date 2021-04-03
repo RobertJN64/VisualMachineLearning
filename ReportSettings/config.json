@@ -1,0 +1,8 @@
+{
+  "net-file": "testnet",
+  "data-file": "titanic.json",
+  "use-data": true,
+  "data-colors": "default",
+  "data-percents": "default",
+  "data-clump": "default"
+}

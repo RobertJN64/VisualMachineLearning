@@ -1,0 +1,24 @@
+Found net with inputs['dis', 'height', 'width', 'offGround', 'speed']
+Found net with outputs['jump', 'duck']
+
+
+Default outputs: {'jump': 0.4361347339282382, 'duck': 0.39538499996905707}
+All max outputs: {'jump': 0.3283297883616775, 'duck': 1.0766840626141052}
+All min outputs: {'jump': 0, 'duck': 0}
+
+
+When dis is low, outputs change: {'jump': 0.08445137909676004, 'duck': -0.1781336014499335}
+When dis is high, outputs change: {'jump': -0.2197381123131738, 'duck': 0.523639443913214}
+
+When height is low, outputs change: {'jump': 0.10587342628405794, 'duck': -0.014189397748627264}
+When height is high, outputs change: {'jump': -0.4361347339282382, 'duck': 0.07317558831177157}
+
+When width is low, outputs change: {'jump': -0.4225734937072403, 'duck': 0.1143916787715119}
+When width is high, outputs change: {'jump': 0.2115623957752405, 'duck': 0.37884477145281414}
+
+When offGround is low, outputs change: {'jump': -0.3052813012853622, 'duck': -0.2197430930218452}
+When offGround is high, outputs change: {'jump': 0.005413213664825056, 'duck': 0.28679834542062177}
+
+When speed is low, outputs change: {'jump': -0.13877333919340024, 'duck': 0.3274900913524168}
+When speed is high, outputs change: {'jump': 0.00991844152990723, 'duck': -0.12549662773399295}
+

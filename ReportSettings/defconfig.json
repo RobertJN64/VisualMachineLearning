@@ -1,0 +1,33 @@
+{
+  "header": {
+    "text": "Neural Net Report"
+  },
+  "info": {
+    "inputs": true,
+    "list-inputs": true,
+    "outputs": true,
+    "list-outputs": true,
+    "hidden-layers": true,
+    "individual-layers": false
+  },
+  "data": {
+    "comparison-mode": "SimplePosi"
+  },
+  "custom-net-graph": {
+    "header": "Custom Graph",
+    "x": null,
+    "y": null
+  },
+  "custom-text": {
+    "text": "You forgot to set the custom text"
+  },
+  "custom-header": {
+    "text": "Custom Header"
+  },
+  "high-variance-graph": {
+
+  },
+  "high-prediction-graph": {
+
+  }
+}
