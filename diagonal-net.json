@@ -2,6 +2,7 @@
     "name": "EmptyNet",
     "nets": [
         {
+            "data-file": "",
             "act_func": "relu",
             "expectedInputs": [
                 "A",

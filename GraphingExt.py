@@ -1,6 +1,7 @@
 from matplotlib import pyplot
 
-#TODO - make this a sep library
+print("WARNING! DEPRECATED CODE")
+#now a sep library
 
 def Graph3D(x, y, z, color, xlabel="", ylabel="", zlabel="", title="", block=True, plt=None, s=None):
     if plt is None:

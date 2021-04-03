@@ -2,6 +2,7 @@
     "name": "GA Demo",
     "nets": [
         {
+            "data-file": "",
             "act_func": "relu",
             "expectedInputs": {
                 "dis": {

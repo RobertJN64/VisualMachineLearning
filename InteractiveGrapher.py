@@ -1,6 +1,6 @@
 import MachineLearning.GeneticNets as gn
-import GraphingExt
-import PygameExt as pyg
+import PythonExtended.Graphing as GraphingExt
+import PythonExtended.Pygame as pyg
 import pygame
 from matplotlib import pyplot
 
@@ -225,7 +225,7 @@ def graph(fname):
     #region init matplotlib
     pyplot.ion()
     fig = pyplot.figure()
-    fig.canvas.set_window_title('Interactive Grapher')
+    pyplot.get_current_fig_manager().set_window_title("Interactive Grapher")
     fig.show()
     #endregion
 

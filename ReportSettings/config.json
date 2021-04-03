@@ -1,5 +1,6 @@
 {
   "net-file": "testnet",
+  "template": "ReportSettings/Template.txt",
   "data-file": "titanic.json",
   "use-data": true,
   "data-colors": "default",

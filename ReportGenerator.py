@@ -1,6 +1,8 @@
 import MachineLearning.GeneticNets as gn
 import MachineLearning.GeneticEvolution as ge
 import PythonExtended.Graphing as graph
+#import PythonExtended.DataStructures as d
+import PythonExtended.Math as m
 import matplotlib.pyplot as pyplot
 
 import json
@@ -9,6 +11,12 @@ import os
 import shutil #temporary for testing
 #import datetime #needed after testing
 
+#GLOBAL VARS
+class ReportInfo:
+    def __init__(self):
+        self.totalaccuracy = None
+
+reportinfo = ReportInfo()
 #region simple generators
 def GenerateStart(title="MachineLearning Report"):
     return ('<!DOCTYPE html>\n' +
@@ -24,7 +32,7 @@ def GenerateEnd():
             '</html>\n')
 
 def GenerateDivStart():
-    return '<div>\n'
+    return '<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">\n'
 
 def GenerateDivEnd():
     return '</div>\n'
@@ -59,11 +67,16 @@ def GenerateInfo(net, config):
     return out
 
 def GenerateDataInfo(net, data, config):
+    global reportinfo
     out = "<h3>Training Data Info</h3>\n"
     out += "<p>Data file has " + str(len(data["data"])) + " lines."
-    score = ge.Test_Obj(net, data["data"], config["comparison-mode"])
-    out += "<p>We correctly predict " + str(round(score * 100 / len(data["data"]),3)) + "% of these.</p>\n"
+    if reportinfo.totalaccuracy is None:
+        reportinfo.totalaccuracy = ge.Test_Obj(net, data["data"], config["comparison-mode"])* 100 / len(data["data"])
+    out += "<p>We correctly predict " + str(round(reportinfo.totalaccuracy,3)) + "% of these.</p>\n"
     return out
+
+def DataPredictionGraph(data, config, directory, fname):
+    return ""
 
 #order of output colors
 colors = [[(255,0,0), 'red'],
@@ -115,7 +128,10 @@ def CustomNetGraph(net, config, directory, fname):
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
     graph.multiGraph3D(xs, ys, zs, outcolors, xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=plt)
-    pyplot.savefig(directory + '/' + fname)
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches = 'tight')
+    pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
     return out
@@ -149,9 +165,49 @@ def HighVarianceGraph(net, config, directory, fname):
             yaxis = inputa
             secondbest = dif
     #endregion
-    return CustomNetGraph(net, {"x": xaxis, "y":yaxis, "header":"High Variance Graph"}, directory, fname)
+    return CustomNetGraph(net, {"x": xaxis, "y":yaxis, "header":"High Variance Graph", "customize": config["customize"]}, directory, fname)
 
-def HighPredictionGraph(net, config, directory, fname):
+def HighPredictionGraph(net, data, config, directory, fname):
+    global reportinfo
+    # region Measure Prediction
+    best = 0
+    secondbest = 0
+    xaxis = ""
+    yaxis = ""
+    for inputa in net.inputs:
+        score = 0
+        for item in data["data"]:
+            net.reset()
+            for key in item:
+                if key == inputa:
+                    net.setNode(key, m.unitscale(data["inputs"][key]["min"], item[key], data["inputs"][key]["max"]))
+                elif key in net.inputs:
+                    net.setNode(key, 0)
+            net.process()
+            for out in net.outputs:
+                val = item[out]
+                if config["test-mode"] != "SimplePosi":
+                    val = net.scale(out, item[out])
+                score += ge.Test_Output(net.getOutput()[out], val, config["test-mode"])
+
+        if score > best:
+            yaxis = xaxis
+            xaxis = inputa
+            secondbest = best
+            best = score
+        elif score > secondbest:
+            yaxis = inputa
+            secondbest = score
+    # endregion
+    newconfig = {"x": xaxis, "y": yaxis, "header": "High Prediction Graph", "customize": config["customize"]}
+    if reportinfo.totalaccuracy is None:
+        reportinfo.totalaccuracy = ge.Test_Obj(net, data["data"], config["comparison-mode"]) * 100 /len(data["data"])
+    localscore = best*100 / len(data["data"])
+    info = ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
+            "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
+    return CustomNetGraph(net, newconfig, directory, fname) + info
+
+def NonLinearVarianceGraph(net, config, directory, fname):
     return ""
 
 def GenerateCustomText(config):
@@ -164,6 +220,8 @@ def GenerateCustomHeader(config):
 
 
 def GenerateReport():
+    global reportinfo
+    reportinfo = ReportInfo()
     #region load config and template
     with open("ReportSettings/defconfig.json") as f:
         defconfig = json.load(f)
@@ -171,13 +229,11 @@ def GenerateReport():
     with open("ReportSettings/config.json") as f:
         custconfig = json.load(f)
 
-    with open("ReportSettings/template.txt") as f:
-        template = f.readlines()
-
-    for i in range(0, len(template)):
-        template[i] = template[i].strip('\n')
     #endregion
     #region assert config structure
+    if "template" not in custconfig:
+        warnings.warn("Config file missing template")
+        return
     if "net-file" not in custconfig:
         warnings.warn("Config file missing net file name")
         return
@@ -186,12 +242,18 @@ def GenerateReport():
         warnings.warn("Config file asks to use data, but no data file specified")
         return
     #endregion
-    #region load net + data
+    #region load net + data + template
     net = gn.loadNets(custconfig["net-file"])[0][0]
     data = None
     if custconfig["use-data"]:
         with open(custconfig["data-file"]) as f:
             data = json.load(f)
+
+    with open(custconfig["template"]) as f:
+        template = f.readlines()
+
+    for i in range(0, len(template)):
+        template[i] = template[i].strip('\n')
     #endregion
 
     #region manage directories
@@ -211,7 +273,7 @@ def GenerateReport():
         #region Line + Info
         line = line.split(' | ')
         info = {}
-        if len(line) == 0:
+        if len(line) == 0 or line[0] == "":
             warnings.warn("Line " + str(linenumber) + " empty")
             continue
 
@@ -234,7 +296,7 @@ def GenerateReport():
 
         localconfig = defconfig[line]
         for key in custconfig:
-            if key in localconfig:
+            if key in localconfig and custconfig[key] != "default":
                 localconfig[key] = custconfig[key]
             else:
                 pass #we can ignore some keys here
@@ -255,6 +317,8 @@ def GenerateReport():
             file += GenerateInfo(net, localconfig)
         elif line == "data":
             file += GenerateDataInfo(net, data, localconfig)
+        elif line == "data-predictability-graph":
+            file += DataPredictionGraph(data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-graph":
             file += CustomNetGraph(net, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-text":
@@ -264,7 +328,9 @@ def GenerateReport():
         elif line == "high-variance-graph":
             file += HighVarianceGraph(net, localconfig, fname, str(linenumber)+"img.png")
         elif line == "high-prediction-graph":
-            file += HighPredictionGraph(net, localconfig, fname, str(linenumber)+"img.png")
+            file += HighPredictionGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
+        elif line == "nonlinear-variance-graph":
+            file += NonLinearVarianceGraph(net, localconfig, fname, str(linenumber)+"img.png")
 
         else:
             warnings.warn("ReportGenerator is missing function " + line)

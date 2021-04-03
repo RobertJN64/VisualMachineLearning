@@ -1,5 +1,4 @@
-mode = "Report"
-#mode = str(input("Net/Genetic/Analyze/Interactive/Report: "))
+mode = str(input("Net/Genetic/Analyze/Interactive/Report/CreateReport: "))
 
 
 if mode == "Net":
@@ -26,6 +25,10 @@ elif mode == "Interactive":
 elif mode == "Report":
     import ReportGenerator as rg
     rg.GenerateReport()
+
+elif mode == "CreateReport":
+    import ReportCreatingAssist as r
+    r.run()
 
 
 elif mode == "CreateEmptyNet":

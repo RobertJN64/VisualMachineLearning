@@ -15,6 +15,7 @@
   },
   "custom-net-graph": {
     "header": "Custom Graph",
+    "customize": false,
     "x": null,
     "y": null
   },
@@ -25,9 +26,18 @@
     "text": "Custom Header"
   },
   "high-variance-graph": {
-
+    "customize": false
   },
   "high-prediction-graph": {
-
+    "customize": false,
+    "test-mode": "SimplePosi"
+  },
+  "data-predictability-graph": {
+    "clump": true,
+    "customize": false,
+    "color": "data-file"
+  },
+  "nonlinear-variance-graph": {
+    "customize": false
   }
 }

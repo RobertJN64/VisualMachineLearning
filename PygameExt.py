@@ -1,5 +1,7 @@
 import pygame
 
+print("WARNING-DEPRECATED CODE")
+
 def createScreen(x, y, caption, resize=False):
     if resize:
         display = pygame.display.set_mode((x,y), pygame.RESIZABLE)
