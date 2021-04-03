@@ -2,7 +2,8 @@ Header
 Info
 Data
 Data-Predictability-Graph
+Custom-Data-Graph | {"x": "Fare", "y": "Gender", "z": "Pclass", "out": "Output", "customize": true}
 Custom-Net-Graph | {"x": "Gender", "y": "Age"}
 High-Variance-Graph
-High-Prediction-Graph
+#High-Prediction-Graph
 NonLinear-Variance-Graph

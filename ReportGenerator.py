@@ -17,6 +17,23 @@ class ReportInfo:
         self.totalaccuracy = None
 
 reportinfo = ReportInfo()
+
+#classes
+class datapoint:
+    def __init__(self, x, y, z, color=None):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.color = color
+        self.size = 1
+
+    def isClose(self, dp, useColor=True, xdif=0.1, ydif=0.1, zdif=0.1):
+        return (abs(self.x - dp.x) < xdif and
+                abs(self.y - dp.y) < ydif and
+                abs(self.z - dp.z) < zdif and
+                (self.color == dp.color or not useColor))
+
+
 #region simple generators
 def GenerateStart(title="MachineLearning Report"):
     return ('<!DOCTYPE html>\n' +
@@ -82,7 +99,7 @@ def DataPredictionGraph(data, config, directory, fname):
 colors = [[(255,0,0), 'red'],
           [(0,128,0), 'green'],
           [(255,255,0), 'yellow'],
-          [(255,140,0), 'orange']]
+          [(0,0,0), 'black']]
 def CustomNetGraph(net, config, directory, fname):
     if config["x"] is None or config["y"] is None:
         warnings.warn("Custom net graph missing configuration")
@@ -131,6 +148,57 @@ def CustomNetGraph(net, config, directory, fname):
     if config["customize"]:
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches = 'tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
+    return out
+
+def CustomNetDataGraph(net, data, config, directory, fname):
+    return ""
+
+def DataGraph3Axis(data, config, directory, fname):
+    xvals = []
+    yvals = []
+    zvals = []
+    svals = []
+    colorvals = []
+    xaxis = config["x"]
+    yaxis = config["y"]
+    zaxis = config["z"]
+    xvariance = (data["inputs"][xaxis]["max"] - data["inputs"][xaxis]["min"])/20
+    yvariance = (data["inputs"][yaxis]["max"] - data["inputs"][yaxis]["min"])/20
+    zvariance = (data["inputs"][zaxis]["max"] - data["inputs"][zaxis]["min"])/20
+    coloraxis = config["out"]
+    datapoints = []
+    for line in data["data"]:
+        pointa = datapoint(line[xaxis], line[yaxis], line[zaxis], line[coloraxis])
+        found = False
+        for pointb in datapoints:
+            if pointa.isClose(pointb,True,xvariance,yvariance,zvariance):
+                found = True
+                pointb.size += 1
+        if not found or not config["clump"]:
+            datapoints.append(pointa)
+
+    for point in datapoints:
+        xvals.append(point.x)
+        yvals.append(point.y)
+        zvals.append(point.z)
+        svals.append(point.size)
+        if point.color > 0:
+            colorvals.append("blue")
+        else:
+            colorvals.append("orange")
+
+    if not config["clump"]:
+        svals = None
+
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+    graph.Graph3D(xvals, yvals, zvals, colorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis + " by " + zaxis, plt=plt, s=svals)
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
@@ -208,7 +276,73 @@ def HighPredictionGraph(net, data, config, directory, fname):
     return CustomNetGraph(net, newconfig, directory, fname) + info
 
 def NonLinearVarianceGraph(net, config, directory, fname):
-    return ""
+    #region measure variance
+    variance = []
+    nonlinear = []
+    inputs = []
+    for inputa in net.inputs:
+        outputs = []
+        x = -1
+        while x <= 1:
+            net.reset()
+            for name in net.inputs:
+                if name == inputa:
+                    net.setNode(name, x)
+                else:
+                    net.setNode(name, 0)
+            net.process()
+            outputs.append(net.getOutput()[list(net.outputs.keys())[0]])
+            x += 0.1
+        variance.append(max(outputs)-min(outputs))
+        inputs.append(inputa)
+        nonlinear.append((3 < outputs.index(max(outputs)) < 18 or 3 < outputs.index(min(outputs)) < 18))
+    #endregion
+    count = 0
+    for item in nonlinear:
+        if item:
+            count += 1
+    target = 0
+    secondtarget = 0
+    xaxis = ""
+    yaxis = ""
+    bonustext = ""
+    if count == 0:
+        return "<h3>Non-Linear Pattern Graph</h3>\n<p>None found</p>\n"
+
+    if count == 2:
+        for i in range(0, len(nonlinear)):
+            if nonlinear[i] and xaxis == "":
+                xaxis = inputs[i]
+            else:
+                yaxis = inputs[i]
+
+    if count > 2:
+        for i in range(0, len(nonlinear)):
+            if nonlinear[i]:
+                if variance[i] > target:
+                    yaxis = xaxis
+                    secondtarget = target
+                    xaxis = inputs[i]
+                    target = variance[i]
+                elif variance[i] > secondtarget:
+                    yaxis = inputs[i]
+                    secondtarget = variance[i]
+        bonustext = "<p>More than 2 non-linear inputs. We picked the ones with the most variance</p>\n"
+
+    if count == 1:
+        secondtarget = max(variance)
+        for i in range(0, len(nonlinear)):
+            if nonlinear[i]:
+                xaxis = inputs[i]
+                target = variance[i]
+        for i in range(0, len(nonlinear)):
+            if inputs[i] != xaxis and abs(variance[i] - target) < secondtarget:
+                secondtarget = abs(variance[i] - target)
+                yaxis = inputs[i]
+        bonustext= "<p>Only one non-linear input (" + xaxis +"). We picked a second input with similar variance.</p>\n"
+
+    newconfig = {"x": xaxis, "y":yaxis, "header":"Non-Linear Pattern Graph", "customize": config["customize"]}
+    return CustomNetGraph(net, newconfig, directory, fname) + bonustext
 
 def GenerateCustomText(config):
     return "<p>" + config["text"] + "</p>\n"
@@ -273,6 +407,8 @@ def GenerateReport():
         #region Line + Info
         line = line.split(' | ')
         info = {}
+        if line[0][0] == "#":
+            continue
         if len(line) == 0 or line[0] == "":
             warnings.warn("Line " + str(linenumber) + " empty")
             continue
@@ -331,6 +467,8 @@ def GenerateReport():
             file += HighPredictionGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "nonlinear-variance-graph":
             file += NonLinearVarianceGraph(net, localconfig, fname, str(linenumber)+"img.png")
+        elif line == "custom-data-graph":
+            file += DataGraph3Axis(data, localconfig, fname, str(linenumber)+"img.png")
 
         else:
             warnings.warn("ReportGenerator is missing function " + line)

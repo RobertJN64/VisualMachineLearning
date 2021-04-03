@@ -1,4 +1,4 @@
-mode = str(input("Net/Genetic/Analyze/Interactive/Report/CreateReport: "))
+mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template: "))
 
 
 if mode == "Net":
@@ -26,7 +26,7 @@ elif mode == "Report":
     import ReportGenerator as rg
     rg.GenerateReport()
 
-elif mode == "CreateReport":
+elif mode == "Template":
     import ReportCreatingAssist as r
     r.run()
 

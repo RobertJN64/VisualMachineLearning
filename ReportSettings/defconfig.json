@@ -39,5 +39,14 @@
   },
   "nonlinear-variance-graph": {
     "customize": false
+  },
+  "custom-data-graph": {
+    "header": "Custom Data Graph",
+    "customize": false,
+    "x": null,
+    "y": null,
+    "z": null,
+    "out": null,
+    "clump": true
   }
 }
