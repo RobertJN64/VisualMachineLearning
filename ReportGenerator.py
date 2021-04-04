@@ -33,6 +33,127 @@ class datapoint:
                 abs(self.z - dp.z) < zdif and
                 (self.color == dp.color or not useColor))
 
+class graphpoint:
+    def __init__(self, x, y, z, color="blue"):
+        self.x = x
+        self.y = y
+        self.z = z
+
+        self.color = color
+        self.posicount = z
+        self.count = 1
+
+
+def clump(points, xdif, ydif, zdif, percent=False):
+    outpoints = []
+    for pointa in points:
+        found = False
+        for pointb in outpoints:
+            if (abs(pointa.x - pointb.x) < xdif and
+                abs(pointa.y - pointb.y) < ydif and
+                (abs(pointa.z - pointb.z) < zdif or percent)):
+                found = True
+                pointb.count += 1
+                pointb.posicount += pointa.z
+        if not found:
+            outpoints.append(graphpoint(pointa.x, pointa.y, pointa.z, pointa.color))
+    return outpoints
+
+def colorize(points, colormode, percents):
+    for point in points:
+        if percents:
+            point.z = (point.posicount / point.count) * 100
+        if colormode == "none":
+            point.color = "blue"
+        elif colormode == "data-file":
+            if percents:
+                point.color = (1 - m.scale(0, point.z, 100, 0, 1),
+                               0.5 - m.scale(0, point.z, 100, 0, 0.5),
+                               m.scale(0, point.z, 100, 0, 1))
+            else:
+                if point.z > 0:
+                    point.color = "blue"
+                else:
+                    point.color = "orange"
+        elif colormode == "score":
+            # TODO - score coloring
+            pass
+        elif colormode == "net-score":
+            # TODO - net coloring
+            pass
+        else:
+            warnings.warn("Color mode not found: " + str(colormode))
+
+#region GraphingFuncs
+def GraphNetData(net, data, xaxis, yaxis, zaxis, defvalue, useclump, usepercents, colormode, fig):
+    #region handle net
+    netxvals = []
+    netyvals = []
+    netzvals = []
+
+    xmin = data["inputs"][xaxis]["min"]
+    xmax = data["inputs"][xaxis]["max"]
+    ymin = data["inputs"][yaxis]["min"]
+    ymax = data["inputs"][yaxis]["max"]
+    zmin = data["outputs"][zaxis]["min"]
+    zmax = data["outputs"][zaxis]["max"]
+
+    x = -1
+    while x <= 1:
+        y = -1
+        while y <= 1:
+            netxvals.append(m.scale(-1, x, 1, xmin, xmax))
+            netyvals.append(m.scale(-1, y, 1, ymin, ymax))
+            net.reset()
+            for inName in net.inputs:
+                if inName == xaxis:
+                    net.setNode(inName, x)
+                elif inName == yaxis:
+                    net.setNode(inName, y)
+                else:
+                    net.setNode(inName, defvalue)
+            net.process()
+            if usepercents:
+                netzvals.append(m.scale(-1, net.getNode(zaxis), 1, 0, 100))
+            else:
+                netzvals.append(m.scale(-1, net.getNode(zaxis), 1, zmin, zmax))
+
+            y += 0.1
+        x += 0.1
+    #endregion
+    #region handle data
+    datapoints = []
+    for item in data["data"]:
+        datapoints.append(graphpoint(item[xaxis], item[yaxis], item[zaxis]))
+
+    if useclump or usepercents:
+        datapoints = clump(datapoints, (xmax-xmin)/20, (ymax-ymin)/20, (zmax-zmin)/20, usepercents)
+
+    colorize(datapoints, colormode, usepercents)
+
+    dataxvals = []
+    datayvals = []
+    datazvals = []
+    datacolorvals = []
+    datasizevals = []
+    for point in datapoints:
+        dataxvals.append(point.x)
+        datayvals.append(point.y)
+        datazvals.append(point.z)
+        datacolorvals.append(point.color)
+        datasizevals.append(point.count)
+
+    size = None
+    if useclump or usepercents:
+        size = datasizevals
+
+    if usepercents:
+        zaxis += "%"
+
+    #endregion
+    graph.Graph3D(netxvals,netyvals,netzvals,"red", xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=fig)
+    graph.Graph3D(dataxvals, datayvals, datazvals, datacolorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=fig, s=size)
+
 
 #region simple generators
 def GenerateStart(title="MachineLearning Report"):
@@ -154,7 +275,24 @@ def CustomNetGraph(net, config, directory, fname):
     return out
 
 def CustomNetDataGraph(net, data, config, directory, fname):
-    return ""
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+    GraphNetData(net, data, config["x"], config["y"], list(net.outputs.keys())[0], 0, config["clump"], config["percents"], config["color"], plt)
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
+    if config["color"] == "data-file":
+        out += '<p>Color mode is based on point output in data file. Blue is 1, orange is 0.</p>\n'
+    elif config["color"] == "score":
+        out += '<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>\n'
+    elif config["color"] == "net-score":
+        out += '<p>Color mode is based on true net score given that point. Blue is 1, orange is 0.</p>\n'
+    if config["percents"]:
+        out += '<p>Data points are clumped into percents.'
+    return out
 
 def DataGraph3Axis(data, config, directory, fname):
     xvals = []
@@ -273,6 +411,7 @@ def HighPredictionGraph(net, data, config, directory, fname):
     localscore = best*100 / len(data["data"])
     info = ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
             "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
+    # TODO - add data here
     return CustomNetGraph(net, newconfig, directory, fname) + info
 
 def NonLinearVarianceGraph(net, config, directory, fname):
@@ -351,7 +490,6 @@ def GenerateCustomHeader(config):
     return "<h3>" + config["text"] + "</h3>\n"
 
 #endregion
-
 
 def GenerateReport():
     global reportinfo
@@ -457,6 +595,8 @@ def GenerateReport():
             file += DataPredictionGraph(data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-graph":
             file += CustomNetGraph(net, localconfig, fname, str(linenumber)+"img.png")
+        elif line == "custom-net-data-graph":
+            file += CustomNetDataGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-text":
             file += GenerateCustomText(localconfig)
         elif line == "custom-header":
