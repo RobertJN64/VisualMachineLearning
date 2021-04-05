@@ -10,6 +10,7 @@ import warnings
 import os
 import shutil #temporary for testing
 #import datetime #needed after testing
+import time
 
 # region GLOBAL VARS + classes
 class ReportInfo:
@@ -310,9 +311,68 @@ def GenerateDataInfo(net, data, config):
     out += "<p>We correctly predict " + str(round(reportinfo.totalaccuracy,3)) + "% of these.</p>\n"
     return out
 
-def GenerateDataPredictionGraph(data, config, directory, fname):
-    # TODO - avg - avg dif compare code
-    return ""
+def GenerateDataPredictionGraph(data, outaxis, config, directory, fname):
+    inputs = []
+    avgs = []
+    count = []
+
+    for item in data["inputs"]:
+        inputs.append(item)
+        avgs.append([0.0,0.0])
+        count.append([0,0])
+
+    for row in data["data"]:
+        for i in range(0, len(inputs)):
+            for item in inputs:
+                if row[outaxis] > 0:
+                    avgs[i][1] += row[item]
+                    count[i][1] += 1
+                else:
+                    avgs[i][0] += row[item]
+                    count[i][0] += 1
+
+    for i in range(0, len(inputs)):
+        avgs[i][0] = avgs[i][0] / count[i][0]
+        avgs[i][1] = avgs[i][1] / count[i][1]
+
+    difs = []
+    for i in range(0, len(inputs)):
+        difs.append(abs(avgs[i][0] - avgs[i][1]) / abs((avgs[i][0] + avgs[i][1])))
+
+    xaxis = ""
+    yaxis = ""
+    zaxis = ""
+    best = 0
+    secondbest = 0
+    thirdbest = 0
+    for i in range(0, len(inputs)):
+        dif = difs[i]
+        if dif > best:
+            zaxis = yaxis
+            yaxis = xaxis
+            xaxis = inputs[i]
+            thirdbest = secondbest
+            secondbest = best
+            best = dif
+        elif dif > secondbest:
+            zaxis = yaxis
+            yaxis = inputs[i]
+            thirdbest = secondbest
+            secondbest = dif
+        elif dif > thirdbest:
+            zaxis = inputs[i]
+            thirdbest = dif
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+    GraphData3Axis(data, xaxis, yaxis, zaxis, outaxis, config["clump"], plt)
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
+    out += colorinfotext("data-file", False)
+    return out
 
 def GenerateCustomNetGraph(net, config, directory, fname):
     if config["x"] is None or config["y"] is None:
@@ -394,6 +454,7 @@ def GenerateHighVarianceGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
+    out += colorinfotext(config["color"], config["percents"])
     return out
 
 def GenerateHighPredictionGraph(net, data, config, directory, fname):
@@ -449,6 +510,7 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
     out += ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
             "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
     #endregion
+    out += colorinfotext(config["color"], config["percents"])
     return out
 
 def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
@@ -532,6 +594,7 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
+    out += colorinfotext(config["color"], config["percents"])
     return out + bonustext
 
 #endregion
@@ -584,10 +647,12 @@ def GenerateReport():
     #endregion
 
     #create report
+    starttime = time.time()
     file += GenerateStart()
 
     linenumber = 0
     for line in template:
+        lasttime = time.time()
         #region Line + Info
         line = line.split(' | ')
         info = {}
@@ -621,6 +686,13 @@ def GenerateReport():
             else:
                 pass #we can ignore some keys here
 
+        if not custconfig["use-data"] and "add-data" in localconfig:
+            localconfig["add-data"] = False
+
+        if not custconfig["use-data"] and "requires-data" in localconfig and localconfig["requires-data"]:
+            warnings.warn("Adding line <" + line + "> which requires data, but no data provided.")
+            return
+
         for key in info:
             if key in localconfig:
                 localconfig[key] = info[key]
@@ -638,7 +710,7 @@ def GenerateReport():
         elif line == "data":
             file += GenerateDataInfo(net, data, localconfig)
         elif line == "data-predictability-graph":
-            file += GenerateDataPredictionGraph(data, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateDataPredictionGraph(data, list(net.outputs.keys())[0], localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-graph":
             file += GenerateCustomNetGraph(net, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-data-graph":
@@ -660,6 +732,8 @@ def GenerateReport():
             warnings.warn("ReportGenerator is missing function " + line)
         file += GenerateDivEnd()
 
+        print("Finished line (" + str(linenumber) + "): " + line + " in " + str(round(time.time() - lasttime, 3)) + " seconds.")
+
         linenumber += 1
 
     file += GenerateEnd()
@@ -667,4 +741,5 @@ def GenerateReport():
     #region export
     with open(fname + "/report.html", "w") as f:
         f.write(file)
+    print("Finished report in " + str(round(time.time() - starttime, 3)) + " seconds.")
     #endregion

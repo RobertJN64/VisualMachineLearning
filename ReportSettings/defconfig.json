@@ -2,6 +2,12 @@
   "header": {
     "text": "Neural Net Report"
   },
+  "custom-text": {
+    "text": "You forgot to set the custom text"
+  },
+  "custom-header": {
+    "text": "Custom Header"
+  },
   "info": {
     "inputs": true,
     "list-inputs": true,
@@ -11,7 +17,15 @@
     "individual-layers": false
   },
   "data": {
-    "comparison-mode": "SimplePosi"
+    "comparison-mode": "SimplePosi",
+    "requires-data": true
+  },
+  "data-predictability-graph": {
+    "header": "Data Predictability Graph",
+    "clump": true,
+    "customize": false,
+    "color": "data-file",
+    "requires-data": true
   },
   "custom-net-graph": {
     "header": "Custom Graph",
@@ -23,11 +37,27 @@
     "percents": false,
     "color": "data-file"
   },
-  "custom-text": {
-    "text": "You forgot to set the custom text"
+  "custom-data-graph": {
+    "header": "Custom Data Graph",
+    "customize": false,
+    "x": null,
+    "y": null,
+    "z": null,
+    "out": null,
+    "clump": true,
+    "requires-data": true
   },
-  "custom-header": {
-    "text": "Custom Header"
+  "custom-net-data-graph": {
+    "header": "Custom Net-Data Graph",
+    "customize": false,
+    "x": null,
+    "y": null,
+    "z": null,
+    "out": null,
+    "clump": true,
+    "percents": false,
+    "color": "data-file",
+    "requires-data": true
   },
   "high-variance-graph": {
     "header": "High Variance Graph",
@@ -44,38 +74,13 @@
     "add-data": true,
     "clump": true,
     "percents": false,
-    "color": "data-file"
-  },
-  "data-predictability-graph": {
-    "header": "Data Predictability Graph",
-    "clump": true,
-    "customize": false,
-    "color": "data-file"
+    "color": "data-file",
+    "requires-data": true
   },
   "nonlinear-variance-graph": {
     "header": "Non-Linear Variance Graph",
     "customize": false,
     "add-data": false,
-    "clump": true,
-    "percents": false,
-    "color": "data-file"
-  },
-  "custom-data-graph": {
-    "header": "Custom Data Graph",
-    "customize": false,
-    "x": null,
-    "y": null,
-    "z": null,
-    "out": null,
-    "clump": true
-  },
-  "custom-net-data-graph": {
-    "header": "Custom Net-Data Graph",
-    "customize": false,
-    "x": null,
-    "y": null,
-    "z": null,
-    "out": null,
     "clump": true,
     "percents": false,
     "color": "data-file"

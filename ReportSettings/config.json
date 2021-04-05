@@ -3,7 +3,7 @@
   "template": "ReportSettings/Template.txt",
   "data-file": "titanic.json",
   "use-data": true,
-  "data-colors": "default",
-  "data-percents": "default",
-  "data-clump": "default"
+  "color": "default",
+  "percents": "default",
+  "clump": "default"
 }
