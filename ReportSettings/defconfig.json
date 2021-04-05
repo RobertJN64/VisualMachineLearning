@@ -30,6 +30,7 @@
     "text": "Custom Header"
   },
   "high-variance-graph": {
+    "header": "High Variance Graph",
     "customize": false,
     "add-data": false,
     "clump": true,
@@ -37,6 +38,7 @@
     "color": "data-file"
   },
   "high-prediction-graph": {
+    "header": "High Prediction Graph",
     "customize": false,
     "test-mode": "SimplePosi",
     "add-data": true,
@@ -45,11 +47,13 @@
     "color": "data-file"
   },
   "data-predictability-graph": {
+    "header": "Data Predictability Graph",
     "clump": true,
     "customize": false,
     "color": "data-file"
   },
   "nonlinear-variance-graph": {
+    "header": "Non-Linear Variance Graph",
     "customize": false,
     "add-data": false,
     "clump": true,

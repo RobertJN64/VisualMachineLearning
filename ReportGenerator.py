@@ -11,14 +11,12 @@ import os
 import shutil #temporary for testing
 #import datetime #needed after testing
 
-#GLOBAL VARS
+# region GLOBAL VARS + classes
 class ReportInfo:
     def __init__(self):
         self.totalaccuracy = None
 
-reportinfo = ReportInfo()
 
-#classes
 class datapoint:
     def __init__(self, x, y, z, color=None):
         self.x = x
@@ -43,6 +41,13 @@ class graphpoint:
         self.posicount = z
         self.count = 1
 
+#endregion
+#region data management functions
+#order of output colors
+colors = [[(255,0,0), 'red'],
+          [(0,128,0), 'green'],
+          [(255,255,0), 'yellow'],
+          [(0,0,0), 'black']]
 
 def clump(points, xdif, ydif, zdif, percent=False):
     outpoints = []
@@ -84,7 +89,57 @@ def colorize(points, colormode, percents):
         else:
             warnings.warn("Color mode not found: " + str(colormode))
 
+def colorinfotext(colormode, percents):
+    out = ""
+    if colormode == "data-file":
+        out += '<p>Color mode is based on point output in data file. Blue is 1, orange is 0.</p>\n'
+    elif colormode == "score":
+        out += '<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>\n'
+    elif colormode == "net-score":
+        out += '<p>Color mode is based on true net score given that point. Blue is 1, orange is 0.</p>\n'
+    if percents:
+        out += '<p>Data points are clumped into percents.'
+    return out
+#endregion
+
 #region GraphingFuncs
+def GraphNet(net, xaxis, yaxis, fig):
+    zaxis = ' & '.join(net.outputs)
+    xs = []
+    ys = []
+    zs = []
+    outcolors = []
+    count = 0
+    for name in net.outputs:
+        xvals = []
+        yvals = []
+        zvals = []
+        outcolors.append(colors[count][1])
+        count += 1
+        x = -1
+        while x <= 1:
+            y = -1
+            while y <= 1:
+                xvals.append(x)
+                yvals.append(y)
+
+                net.reset()
+                for inName in net.inputs:
+                    if inName == xaxis:
+                        net.setNode(inName, x)
+                    elif inName == yaxis:
+                        net.setNode(inName, y)
+                    else:
+                        net.setNode(inName, 0)
+                net.process()
+                zvals.append(net.getNode(name))
+                y += 0.1
+            x += 0.1
+        xs.append(xvals)
+        ys.append(yvals)
+        zs.append(zvals)
+    graph.multiGraph3D(xs, ys, zs, outcolors, xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=fig)
+
 def GraphNetData(net, data, xaxis, yaxis, zaxis, defvalue, useclump, usepercents, colormode, fig):
     #region handle net
     netxvals = []
@@ -154,6 +209,42 @@ def GraphNetData(net, data, xaxis, yaxis, zaxis, defvalue, useclump, usepercents
     graph.Graph3D(netxvals,netyvals,netzvals,"red", xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=fig)
     graph.Graph3D(dataxvals, datayvals, datazvals, datacolorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=fig, s=size)
 
+def GraphData3Axis(data, xaxis, yaxis, zaxis, coloraxis, useclump, fig):
+    xvals = []
+    yvals = []
+    zvals = []
+    svals = []
+    colorvals = []
+    xvariance = (data["inputs"][xaxis]["max"] - data["inputs"][xaxis]["min"]) / 20
+    yvariance = (data["inputs"][yaxis]["max"] - data["inputs"][yaxis]["min"]) / 20
+    zvariance = (data["inputs"][zaxis]["max"] - data["inputs"][zaxis]["min"]) / 20
+    datapoints = []
+    for line in data["data"]:
+        pointa = datapoint(line[xaxis], line[yaxis], line[zaxis], line[coloraxis])
+        found = False
+        for pointb in datapoints:
+            if pointa.isClose(pointb, True, xvariance, yvariance, zvariance):
+                found = True
+                pointb.size += 1
+        if not found or not useclump:
+            datapoints.append(pointa)
+
+    for point in datapoints:
+        xvals.append(point.x)
+        yvals.append(point.y)
+        zvals.append(point.z)
+        svals.append(point.size)
+        if point.color > 0:
+            colorvals.append("blue")
+        else:
+            colorvals.append("orange")
+
+    if not useclump:
+        svals = None
+
+    graph.Graph3D(xvals, yvals, zvals, colorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis + " by " + zaxis, plt=fig,s=svals)
+
+#endregion
 
 #region simple generators
 def GenerateStart(title="MachineLearning Report"):
@@ -174,12 +265,18 @@ def GenerateDivStart():
 
 def GenerateDivEnd():
     return '</div>\n'
-#endregion
 
-#region generators
 def GenerateHeader(config):
     return '<h1>' + config['text'] + '</h1>\n'
 
+def GenerateCustomText(config):
+    return "<p>" + config["text"] + "</p>\n"
+
+def GenerateCustomHeader(config):
+    return "<h3>" + config["text"] + "</h3>\n"
+#endregion
+
+#region generators
 def GenerateInfo(net, config):
     out = '<h3>Net Info</h3>\n'
     if config["inputs"]:
@@ -213,59 +310,16 @@ def GenerateDataInfo(net, data, config):
     out += "<p>We correctly predict " + str(round(reportinfo.totalaccuracy,3)) + "% of these.</p>\n"
     return out
 
-def DataPredictionGraph(data, config, directory, fname):
+def GenerateDataPredictionGraph(data, config, directory, fname):
+    # TODO - avg - avg dif compare code
     return ""
 
-#order of output colors
-colors = [[(255,0,0), 'red'],
-          [(0,128,0), 'green'],
-          [(255,255,0), 'yellow'],
-          [(0,0,0), 'black']]
-def CustomNetGraph(net, config, directory, fname):
+def GenerateCustomNetGraph(net, config, directory, fname):
     if config["x"] is None or config["y"] is None:
         warnings.warn("Custom net graph missing configuration")
-
-    xaxis = config["x"]
-    yaxis = config["y"]
-    zaxis = ' & '.join(net.outputs)
-    #region send data to net
-    xs = []
-    ys = []
-    zs = []
-    outcolors = []
-    count = 0
-    for name in net.outputs:
-        xvals = []
-        yvals = []
-        zvals = []
-        outcolors.append(colors[count][1])
-        count += 1
-        x = -1
-        while x <= 1:
-            y = -1
-            while y <= 1:
-                xvals.append(x)
-                yvals.append(y)
-
-                net.reset()
-                for inName in net.inputs:
-                    if inName == xaxis:
-                        net.setNode(inName, x)
-                    elif inName == yaxis:
-                        net.setNode(inName, y)
-                    else:
-                        net.setNode(inName, 0)
-                net.process()
-                zvals.append(net.getNode(name))
-                y += 0.1
-            x += 0.1
-        xs.append(xvals)
-        ys.append(yvals)
-        zs.append(zvals)
-    #endregion
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
-    graph.multiGraph3D(xs, ys, zs, outcolors, xaxis, yaxis, zaxis, xaxis + " by " + yaxis, plt=plt)
+    GraphNet(net, config["x"], config["y"], plt)
     if config["customize"]:
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches = 'tight')
@@ -274,7 +328,7 @@ def CustomNetGraph(net, config, directory, fname):
     out += '<img src="' + fname + '"</img>\n'
     return out
 
-def CustomNetDataGraph(net, data, config, directory, fname):
+def GenerateCustomNetDataGraph(net, data, config, directory, fname):
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
     GraphNetData(net, data, config["x"], config["y"], list(net.outputs.keys())[0], 0, config["clump"], config["percents"], config["color"], plt)
@@ -284,56 +338,13 @@ def CustomNetDataGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
-    if config["color"] == "data-file":
-        out += '<p>Color mode is based on point output in data file. Blue is 1, orange is 0.</p>\n'
-    elif config["color"] == "score":
-        out += '<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>\n'
-    elif config["color"] == "net-score":
-        out += '<p>Color mode is based on true net score given that point. Blue is 1, orange is 0.</p>\n'
-    if config["percents"]:
-        out += '<p>Data points are clumped into percents.'
+    out += colorinfotext(config["color"], config["percents"])
     return out
 
-def DataGraph3Axis(data, config, directory, fname):
-    xvals = []
-    yvals = []
-    zvals = []
-    svals = []
-    colorvals = []
-    xaxis = config["x"]
-    yaxis = config["y"]
-    zaxis = config["z"]
-    xvariance = (data["inputs"][xaxis]["max"] - data["inputs"][xaxis]["min"])/20
-    yvariance = (data["inputs"][yaxis]["max"] - data["inputs"][yaxis]["min"])/20
-    zvariance = (data["inputs"][zaxis]["max"] - data["inputs"][zaxis]["min"])/20
-    coloraxis = config["out"]
-    datapoints = []
-    for line in data["data"]:
-        pointa = datapoint(line[xaxis], line[yaxis], line[zaxis], line[coloraxis])
-        found = False
-        for pointb in datapoints:
-            if pointa.isClose(pointb,True,xvariance,yvariance,zvariance):
-                found = True
-                pointb.size += 1
-        if not found or not config["clump"]:
-            datapoints.append(pointa)
-
-    for point in datapoints:
-        xvals.append(point.x)
-        yvals.append(point.y)
-        zvals.append(point.z)
-        svals.append(point.size)
-        if point.color > 0:
-            colorvals.append("blue")
-        else:
-            colorvals.append("orange")
-
-    if not config["clump"]:
-        svals = None
-
+def GenerateDataGraph3Axis(data, config, directory, fname):
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
-    graph.Graph3D(xvals, yvals, zvals, colorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis + " by " + zaxis, plt=plt, s=svals)
+    GraphData3Axis(data, config["x"], config["y"], config["z"], config["out"], config["clump"], plt)
     if config["customize"]:
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches='tight')
@@ -342,7 +353,7 @@ def DataGraph3Axis(data, config, directory, fname):
     out += '<img src="' + fname + '"</img>\n'
     return out
 
-def HighVarianceGraph(net, config, directory, fname):
+def GenerateHighVarianceGraph(net, data, config, directory, fname):
     #region Measure Variance
     best = 0
     secondbest = 0
@@ -371,9 +382,21 @@ def HighVarianceGraph(net, config, directory, fname):
             yaxis = inputa
             secondbest = dif
     #endregion
-    return CustomNetGraph(net, {"x": xaxis, "y":yaxis, "header":"High Variance Graph", "customize": config["customize"]}, directory, fname)
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+    if not config["add-data"]:
+        GraphNet(net, xaxis, yaxis, plt)
+    else:
+        GraphNetData(net, data, xaxis, yaxis, list(net.outputs.keys())[0], 0, config["clump"], config["percents"], config["color"], plt)
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
+    return out
 
-def HighPredictionGraph(net, data, config, directory, fname):
+def GenerateHighPredictionGraph(net, data, config, directory, fname):
     global reportinfo
     # region Measure Prediction
     best = 0
@@ -405,16 +428,30 @@ def HighPredictionGraph(net, data, config, directory, fname):
             yaxis = inputa
             secondbest = score
     # endregion
-    newconfig = {"x": xaxis, "y": yaxis, "header": "High Prediction Graph", "customize": config["customize"]}
+    #region Handle graph
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+
+    if not config["add-data"]:
+        GraphNet(net, xaxis, yaxis, plt)
+    else:
+        GraphNetData(net, data, xaxis, yaxis, list(net.outputs.keys())[0], 0, config["clump"], config["percents"], config["color"], plt)
+
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
     if reportinfo.totalaccuracy is None:
         reportinfo.totalaccuracy = ge.Test_Obj(net, data["data"], config["comparison-mode"]) * 100 /len(data["data"])
     localscore = best*100 / len(data["data"])
-    info = ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
+    out += ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
             "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
-    # TODO - add data here
-    return CustomNetGraph(net, newconfig, directory, fname) + info
+    #endregion
+    return out
 
-def NonLinearVarianceGraph(net, config, directory, fname):
+def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     #region measure variance
     variance = []
     nonlinear = []
@@ -436,6 +473,7 @@ def NonLinearVarianceGraph(net, config, directory, fname):
         inputs.append(inputa)
         nonlinear.append((3 < outputs.index(max(outputs)) < 18 or 3 < outputs.index(min(outputs)) < 18))
     #endregion
+    #region find nonlinear
     count = 0
     for item in nonlinear:
         if item:
@@ -479,18 +517,26 @@ def NonLinearVarianceGraph(net, config, directory, fname):
                 secondtarget = abs(variance[i] - target)
                 yaxis = inputs[i]
         bonustext= "<p>Only one non-linear input (" + xaxis +"). We picked a second input with similar variance.</p>\n"
+    #endregion
 
-    newconfig = {"x": xaxis, "y":yaxis, "header":"Non-Linear Pattern Graph", "customize": config["customize"]}
-    return CustomNetGraph(net, newconfig, directory, fname) + bonustext
+    fig = pyplot.figure()
+    plt = fig.add_subplot(111, projection='3d')
+    if not config["add-data"]:
+        GraphNet(net, xaxis, yaxis, plt)
+    else:
+        GraphNetData(net, data, xaxis, yaxis, list(net.outputs.keys())[0], 0, config["clump"], config["percents"], config["color"], plt)
 
-def GenerateCustomText(config):
-    return "<p>" + config["text"] + "</p>\n"
-
-def GenerateCustomHeader(config):
-    return "<h3>" + config["text"] + "</h3>\n"
+    if config["customize"]:
+        pyplot.show()
+    fig.savefig(directory + '/' + fname, bbox_inches='tight')
+    pyplot.close(fig)
+    out = "<h3>" + config["header"] + "</h3>\n"
+    out += '<img src="' + fname + '"</img>\n'
+    return out + bonustext
 
 #endregion
 
+reportinfo = ReportInfo()
 def GenerateReport():
     global reportinfo
     reportinfo = ReportInfo()
@@ -592,23 +638,23 @@ def GenerateReport():
         elif line == "data":
             file += GenerateDataInfo(net, data, localconfig)
         elif line == "data-predictability-graph":
-            file += DataPredictionGraph(data, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateDataPredictionGraph(data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-graph":
-            file += CustomNetGraph(net, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateCustomNetGraph(net, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-net-data-graph":
-            file += CustomNetDataGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateCustomNetDataGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-text":
             file += GenerateCustomText(localconfig)
         elif line == "custom-header":
             file += GenerateCustomHeader(localconfig)
         elif line == "high-variance-graph":
-            file += HighVarianceGraph(net, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateHighVarianceGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "high-prediction-graph":
-            file += HighPredictionGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateHighPredictionGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "nonlinear-variance-graph":
-            file += NonLinearVarianceGraph(net, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateNonLinearVarianceGraph(net, data, localconfig, fname, str(linenumber)+"img.png")
         elif line == "custom-data-graph":
-            file += DataGraph3Axis(data, localconfig, fname, str(linenumber)+"img.png")
+            file += GenerateDataGraph3Axis(data, localconfig, fname, str(linenumber)+"img.png")
 
         else:
             warnings.warn("ReportGenerator is missing function " + line)
