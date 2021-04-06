@@ -23,10 +23,14 @@ def run():
                 for item in defconfig[block]:
                     newsetting = input(item + ": " + str(defconfig[block][item]) + " -> ")
                     if newsetting != "":
-                        config[item] = newsetting
+                        if newsetting == "False" or newsetting == "false":
+                            config[item] = False
+                        elif newsetting == "True" or newsetting == "true":
+                            config[item] = True
+                        else:
+                            config[item] = newsetting
             file += block
             if config != {}:
-                #TODO - handle json dump properly
                 file += " | " + json.dumps(config)
             file += "\n"
 

@@ -16,7 +16,9 @@ import time
 class ReportInfo:
     def __init__(self):
         self.totalaccuracy = None
-
+        self.usedvariance = []
+        self.usedpredictability = []
+        self.nonlinear = []
 
 class datapoint:
     def __init__(self, x, y, z, color=None):
@@ -298,8 +300,14 @@ def GenerateInfo(net, config):
         if len(net.midnodes) > 0:
             out += "<p>Net is " + str(len(net.midnodes)) + " wide by " + str(len(net.midnodes[0])) + " deep.</p>\n"
         else:
-            out += "<p>Net has no hidden layers."
+            out += "<p>Net has no hidden layers.</p>\n"
 
+    layerstr = ""
+    if config["individual-layers"]:
+        for layer in net.midnodes:
+            layerstr += str(len(layer)) + ", "
+        layerstr = layerstr[:-2]
+        out += "<p>Net hidden layers: " + layerstr + ".</p>\n"
     return out
 
 def GenerateDataInfo(net, data, config):
@@ -414,12 +422,15 @@ def GenerateDataGraph3Axis(data, config, directory, fname):
     return out
 
 def GenerateHighVarianceGraph(net, data, config, directory, fname):
+    global reportinfo
     #region Measure Variance
     best = 0
     secondbest = 0
     xaxis = ""
     yaxis = ""
     for inputa in net.inputs:
+        if inputa in reportinfo.usedvariance:
+            continue
         outputs = []
         x = -1
         while x <= 1:
@@ -441,6 +452,8 @@ def GenerateHighVarianceGraph(net, data, config, directory, fname):
         elif dif > secondbest:
             yaxis = inputa
             secondbest = dif
+    if yaxis == "":
+        return "<p>Not enough variables to create graph.</p>\n"
     #endregion
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
@@ -454,7 +467,12 @@ def GenerateHighVarianceGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
-    out += colorinfotext(config["color"], config["percents"])
+    if config["add-data"]:
+        out += colorinfotext(config["color"], config["percents"])
+    if len(reportinfo.usedvariance) > 0:
+        out += "<p>Ignored variables: " + ', '.join(reportinfo.usedvariance) + "</p>\n"
+    reportinfo.usedvariance.append(xaxis)
+    reportinfo.usedvariance.append(yaxis)
     return out
 
 def GenerateHighPredictionGraph(net, data, config, directory, fname):
@@ -465,6 +483,8 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
     xaxis = ""
     yaxis = ""
     for inputa in net.inputs:
+        if inputa in reportinfo.usedpredictability:
+            continue
         score = 0
         for item in data["data"]:
             net.reset()
@@ -488,6 +508,9 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
         elif score > secondbest:
             yaxis = inputa
             secondbest = score
+
+    if yaxis == "":
+        return "<p>Not enough variables for graph.</p>"
     # endregion
     #region Handle graph
     fig = pyplot.figure()
@@ -510,7 +533,12 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
     out += ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
             "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
     #endregion
-    out += colorinfotext(config["color"], config["percents"])
+    if config["add-data"]:
+        out += colorinfotext(config["color"], config["percents"])
+    if len(reportinfo.usedpredictability) > 0:
+        out += "<p>Ignored variables: " + ', '.join(reportinfo.usedpredictability) + "</p>\n"
+    reportinfo.usedpredictability.append(xaxis)
+    reportinfo.usedpredictability.append(yaxis)
     return out
 
 def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
@@ -519,6 +547,8 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     nonlinear = []
     inputs = []
     for inputa in net.inputs:
+        if inputa in reportinfo.nonlinear:
+            continue
         outputs = []
         x = -1
         while x <= 1:
@@ -546,7 +576,7 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     yaxis = ""
     bonustext = ""
     if count == 0:
-        return "<h3>Non-Linear Pattern Graph</h3>\n<p>None found</p>\n"
+        return "<h3>Non-Linear Variance Graph</h3>\n<p>None found (excluding: " + ', '.join(reportinfo.nonlinear) +")</p>\n"
 
     if count == 2:
         for i in range(0, len(nonlinear)):
@@ -594,7 +624,12 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
-    out += colorinfotext(config["color"], config["percents"])
+    if config["add-data"]:
+        out += colorinfotext(config["color"], config["percents"])
+    if len(reportinfo.nonlinear) > 0:
+        out += "<p>Ignored variables: " + ', '.join(reportinfo.nonlinear) + "</p>\n"
+    reportinfo.nonlinear.append(xaxis)
+    reportinfo.nonlinear.append(yaxis)
     return out + bonustext
 
 #endregion

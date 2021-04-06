@@ -4,6 +4,9 @@ Data
 Data-Predictability-Graph
 Custom-Net-Data-Graph | {"x": "Fare", "y": "Gender", "z": "Pclass", "out": "Output", "percents": true}
 Custom-Net-Graph | {"x": "Gender", "y": "Age"}
-High-Variance-Graph
+High-Variance-Graph | {"add-data": true}
+High-Variance-Graph | {"add-data": true}
 High-Prediction-Graph
+High-Prediction-Graph
+NonLinear-Variance-Graph
 NonLinear-Variance-Graph
