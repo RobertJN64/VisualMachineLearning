@@ -35,7 +35,7 @@ class datapoint:
                 (self.color == dp.color or not useColor))
 
 class graphpoint:
-    def __init__(self, x, y, z, color="blue"):
+    def __init__(self, x, y, z, color="blue", rawjson = None):
         self.x = x
         self.y = y
         self.z = z
@@ -43,6 +43,10 @@ class graphpoint:
         self.color = color
         self.posicount = z
         self.count = 1
+
+        if rawjson is None:
+            rawjson = {}
+        self.rawjson = [rawjson]
 
 #endregion
 #region data management functions
@@ -63,11 +67,12 @@ def clump(points, xdif, ydif, zdif, percent=False):
                 found = True
                 pointb.count += 1
                 pointb.posicount += pointa.z
+                pointb.rawjson.append(pointa.rawjson[0])
         if not found:
             outpoints.append(graphpoint(pointa.x, pointa.y, pointa.z, pointa.color))
     return outpoints
 
-def colorize(points, colormode, percents):
+def colorize(points, colormode, percents, netclassification=None, net=None, testmode="SimplePosi"):
     for point in points:
         if percents:
             point.z = (point.posicount / point.count) * 100
@@ -87,8 +92,8 @@ def colorize(points, colormode, percents):
             # TODO - score coloring
             pass
         elif colormode == "net-score":
-            # TODO - net coloring
-            pass
+            correct = ge.Test_Obj(net, point.rawjson, testmode) / len(point.rawjson)
+            point.color = (1 - correct, (1 - correct)*0.5, correct)
         else:
             warnings.warn("Color mode not found: " + str(colormode))
 
