@@ -576,7 +576,11 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     yaxis = ""
     bonustext = ""
     if count == 0:
-        return "<h3>Non-Linear Variance Graph</h3>\n<p>None found (excluding: " + ', '.join(reportinfo.nonlinear) +")</p>\n"
+        out = "<h3>" + config["header"] + "</h3>\n<p>None found"
+        if len(reportinfo.nonlinear) > 0:
+            out +=  "(excluding: " + ', '.join(reportinfo.nonlinear) +")"
+        out += "</p>\n"
+        return out
 
     if count == 2:
         for i in range(0, len(nonlinear)):
@@ -691,11 +695,11 @@ def GenerateReport():
         #region Line + Info
         line = line.split(' | ')
         info = {}
-        if line[0][0] == "#":
-            continue
         if len(line) == 0 or line[0] == "":
             warnings.warn("Line " + str(linenumber) + " empty")
             continue
+        elif line[0][0] == "#":
+           continue
 
         elif len(line) == 1:
             line = line[0].lower()

@@ -4,6 +4,6 @@
   "data-file": "titanic.json",
   "use-data": true,
   "color": "default",
-  "percents": true,
+  "percents": "default",
   "clump": "default"
 }
