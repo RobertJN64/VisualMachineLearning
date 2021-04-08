@@ -1,5 +1,4 @@
-mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template: "))
-
+mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template/Graph: "))
 
 if mode == "Net":
     #Net demo
@@ -29,6 +28,12 @@ elif mode == "Report":
 elif mode == "Template":
     import ReportCreatingAssist as r
     r.run()
+
+elif mode == "Graph":
+    import Graph as g
+    import json
+    config = json.loads(input("Enter graph command: "))
+    g.Graph(config)
 
 
 elif mode == "CreateEmptyNet":

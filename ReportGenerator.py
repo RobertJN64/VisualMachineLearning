@@ -20,6 +20,8 @@ class ReportInfo:
         self.usedvariance = []
         self.usedpredictability = []
         self.nonlinear = []
+        self.netfile = ""
+        self.datafile = ""
 
 class datapoint:
     def __init__(self, x, y, z, color=None):
@@ -37,7 +39,6 @@ class datapoint:
 
 #endregion
 #region data management functions
-
 def colorinfotext(colormode, percents):
     out = ""
     if colormode == "data-file":
@@ -46,9 +47,30 @@ def colorinfotext(colormode, percents):
         out += '<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>\n'
     elif colormode == "net-score":
         out += '<p>Color mode is based on true net score given that point. Blue is 1, orange is 0.</p>\n'
+    elif colormode == "var-error":
+        out += "<p>Points that these variables get wrong (compared to the full net) are highlighted in orange</p>\n"
     if percents:
         out += '<p>Data points are clumped into percents.'
     return out
+
+def graphcommand(net, netfile, usedata, xaxis, yaxis, zaxis=None, datafile=None, clump=None, usepercents=None, colormode=None):
+    outjson = {"net-file": netfile,
+               "use-data": usedata,
+               "xaxis": xaxis,
+               "yaxis": yaxis}
+    if zaxis is None:
+        outjson["zaxis"] = net.classifier_output
+    else:
+        outjson["zaxis"] = zaxis
+    if datafile is not None:
+        outjson["data-file"] = datafile
+    if clump is not None:
+        outjson["clump"] = clump
+    if usepercents is not None:
+        outjson["usepercents"] = usepercents
+    if colormode is not None:
+        outjson["color-mode"] = colormode
+    return json.dumps(outjson)
 #endregion
 
 def GraphData3Axis(data, xaxis, yaxis, zaxis, coloraxis, useclump, fig):
@@ -85,8 +107,6 @@ def GraphData3Axis(data, xaxis, yaxis, zaxis, coloraxis, useclump, fig):
         svals = None
 
     graph.Graph3D(xvals, yvals, zvals, colorvals, xaxis, yaxis, zaxis, xaxis + " by " + yaxis + " by " + zaxis, plt=fig,s=svals)
-
-#endregion
 
 #region simple generators
 def GenerateStart(title="MachineLearning Report"):
@@ -222,6 +242,7 @@ def GenerateDataPredictionGraph(data, outaxis, config, directory, fname):
     return out
 
 def GenerateCustomNetGraph(net, config, directory, fname):
+    global reportinfo
     if config["x"] is None or config["y"] is None:
         warnings.warn("Custom net graph missing configuration")
     fig = pyplot.figure()
@@ -233,9 +254,11 @@ def GenerateCustomNetGraph(net, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
+    out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, False, config["x"], config["y"])) + "</p>\n"
     return out
 
 def GenerateCustomNetDataGraph(net, data, config, directory, fname):
+    global reportinfo
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
     MLGraphing.GraphNetData(net, data, config["x"], config["y"], net.classifier_output, 0, config["clump"], config["percents"], config["color"], plt)
@@ -245,6 +268,9 @@ def GenerateCustomNetDataGraph(net, data, config, directory, fname):
     pyplot.close(fig)
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
+    out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, True, config["x"], config["y"],
+                                    datafile=reportinfo.datafile, clump=config["clump"],
+                                    usepercents=config["percents"], colormode=config["color"])) + "</p>\n"
     out += colorinfotext(config["color"], config["percents"])
     return out
 
@@ -307,7 +333,13 @@ def GenerateHighVarianceGraph(net, data, config, directory, fname):
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
     if config["add-data"]:
+        out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
+                                                                datafile=reportinfo.datafile, clump=config["clump"],
+                                                                usepercents=config["percents"],
+                                                                colormode=config["color"])) + "</p>\n"
         out += colorinfotext(config["color"], config["percents"])
+    else:
+        out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + "</p>\n"
     if len(reportinfo.usedvariance) > 0:
         out += "<p>Ignored variables: " + ', '.join(reportinfo.usedvariance) + "</p>\n"
     reportinfo.usedvariance.append(xaxis)
@@ -369,11 +401,19 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
     if reportinfo.totalaccuracy is None:
         reportinfo.totalaccuracy = ge.Test_Obj(net, data["data"], config["comparison-mode"]) * 100 /len(data["data"])
     localscore = best*100 / len(data["data"])
-    out += ("<p>This gets " + str(round(localscore,2)) + "% of the data items correct." +
-            "This is " + str(round(localscore*100/reportinfo.totalaccuracy,2)) + "% of the max accuracy.</p>\n")
+
     #endregion
     if config["add-data"]:
+        out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
+                                                                datafile=reportinfo.datafile, clump=config["clump"],
+                                                                usepercents=config["percents"],
+                                                                colormode=config["color"])) + "</p>\n"
         out += colorinfotext(config["color"], config["percents"])
+    else:
+        out += '<p style="font-size: 10px">' + str(
+            graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + "</p>\n"
+    out += ("<p>This gets " + str(round(localscore, 2)) + "% of the data items correct." +
+            "This is " + str(round(localscore * 100 / reportinfo.totalaccuracy, 2)) + "% of the max accuracy.</p>\n")
     if len(reportinfo.usedpredictability) > 0:
         out += "<p>Ignored variables: " + ', '.join(reportinfo.usedpredictability) + "</p>\n"
     reportinfo.usedpredictability.append(xaxis)
@@ -468,7 +508,14 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
     out = "<h3>" + config["header"] + "</h3>\n"
     out += '<img src="' + fname + '"</img>\n'
     if config["add-data"]:
+        out += '<p style="font-size: 10px">' + str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
+                                                                datafile=reportinfo.datafile, clump=config["clump"],
+                                                                usepercents=config["percents"],
+                                                                colormode=config["color"])) + "</p>\n"
         out += colorinfotext(config["color"], config["percents"])
+    else:
+        out += '<p style="font-size: 10px">' + str(
+            graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + "</p>\n"
     if len(reportinfo.nonlinear) > 0:
         out += "<p>Ignored variables: " + ', '.join(reportinfo.nonlinear) + "</p>\n"
     reportinfo.nonlinear.append(xaxis)
@@ -503,10 +550,12 @@ def GenerateReport():
     #endregion
     #region load net + data + template
     net = gn.loadNets(custconfig["net-file"])[0][0]
+    reportinfo.netfile = custconfig["net-file"]
     data = None
     if custconfig["use-data"]:
         with open(custconfig["data-file"]) as f:
             data = json.load(f)
+    reportinfo.datafile = custconfig["data-file"]
 
     with open(custconfig["template"]) as f:
         template = f.readlines()
@@ -583,6 +632,7 @@ def GenerateReport():
 
         #endregion
 
+        #region Call Funcs
         file += GenerateDivStart()
         if line == "header":
             file += GenerateHeader(localconfig)
@@ -612,13 +662,10 @@ def GenerateReport():
         else:
             warnings.warn("ReportGenerator is missing function " + line)
         file += GenerateDivEnd()
-
+        #endregion
         print("Finished line (" + str(linenumber) + "): " + line + " in " + str(round(time.time() - lasttime, 3)) + " seconds.")
-
         linenumber += 1
-
     file += GenerateEnd()
-
     #region export
     with open(fname + "/report.html", "w") as f:
         f.write(file)
