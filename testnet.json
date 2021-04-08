@@ -4,6 +4,7 @@
         {
             "act_func": "sigmoid",
             "data-file": "titanic.json",
+            "classifier-output": "Output",
             "expectedInputs": {
                 "Age": {
                     "max": 80.0,
