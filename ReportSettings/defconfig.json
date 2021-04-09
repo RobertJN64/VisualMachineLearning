@@ -75,7 +75,8 @@
     "clump": true,
     "percents": false,
     "color": "data-file",
-    "requires-data": true
+    "requires-data": true,
+    "comparison-mode": "SimplePosi"
   },
   "nonlinear-variance-graph": {
     "header": "Non-Linear Variance Graph",

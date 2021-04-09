@@ -138,6 +138,20 @@ def GenerateCustomText(config):
 
 def GenerateCustomHeader(config):
     return "<h3>" + config["text"] + "</h3>\n"
+
+def GenerateGraphHTML(net, header, fname, xaxis, yaxis, adddata, colormode, clump, usepercents, excludelist):
+    global reportinfo
+    out = "<h3>" + header + "</h3>\n"
+    out += '<img src="' + fname + '" onclick="alertjson(this);"' + " class='"
+    if adddata:
+        out += str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis, datafile=reportinfo.datafile, clump=clump,
+                                usepercents=usepercents, colormode=colormode)) + "'>\n"
+        out += colorinfotext(colormode, usepercents)
+    else:
+        out += str(graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + "'>\n"
+    if len(excludelist) > 0:
+        out += "<p>Ignored variables: " + ', '.join(excludelist) + "</p>\n"
+    return out
 #endregion
 
 #region generators
@@ -254,9 +268,7 @@ def GenerateCustomNetGraph(net, config, directory, fname):
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches = 'tight')
     pyplot.close(fig)
-    out = "<h3>" + config["header"] + "</h3>\n"
-    out += ('<img src="' + fname + '" onclick="alertjson(this);" class="' +
-            str(graphcommand(net, reportinfo.netfile, False, config["x"], config["y"])) + '">\n')
+    out = GenerateGraphHTML(net, config["header"], fname, config["x"], config["y"], False, "", False, False, [])
     return out
 
 def GenerateCustomNetDataGraph(net, data, config, directory, fname):
@@ -268,12 +280,8 @@ def GenerateCustomNetDataGraph(net, data, config, directory, fname):
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches='tight')
     pyplot.close(fig)
-    out = "<h3>" + config["header"] + "</h3>\n"
-    out += ('<img src="' + fname + '" onclick="alertjson(this);"' + " class='" +
-            str(graphcommand(net, reportinfo.netfile, True, config["x"], config["y"],
-                             datafile=reportinfo.datafile, clump=config["clump"],
-                             usepercents=config["percents"], colormode=config["color"])) + "'>\n")
-    out += colorinfotext(config["color"], config["percents"])
+    out = GenerateGraphHTML(net, config["header"], fname, config["x"], config["y"], True, config["color"], config["clump"],
+                            config["percents"], [])
     return out
 
 def GenerateDataGraph3Axis(data, config, directory, fname):
@@ -332,19 +340,8 @@ def GenerateHighVarianceGraph(net, data, config, directory, fname):
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches='tight')
     pyplot.close(fig)
-    out = "<h3>" + config["header"] + "</h3>\n"
-    out += '<img src="' + fname + '" onclick="alertjson(this);"' + " class='"
-    if config["add-data"]:
-        out += str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
-                                datafile=reportinfo.datafile, clump=config["clump"],
-                                usepercents=config["percents"],
-                                colormode=config["color"])) + "'>\n"
-        out += colorinfotext(config["color"], config["percents"])
-    else:
-        out += str(graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + '">\n'
-
-    if len(reportinfo.usedvariance) > 0:
-        out += "<p>Ignored variables: " + ', '.join(reportinfo.usedvariance) + "</p>\n"
+    out = GenerateGraphHTML(net, config["header"], fname, xaxis, yaxis, config["add-data"], config["color"],
+                            config["clump"], config["percents"], reportinfo.usedvariance)
     reportinfo.usedvariance.append(xaxis)
     reportinfo.usedvariance.append(yaxis)
     return out
@@ -399,23 +396,13 @@ def GenerateHighPredictionGraph(net, data, config, directory, fname):
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches='tight')
     pyplot.close(fig)
-    out = "<h3>" + config["header"] + "</h3>\n"
-    out += '<img src="' + fname + '" onclick="alertjson(this);"' + " class='"
-    if config["add-data"]:
-        out += str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
-                                datafile=reportinfo.datafile, clump=config["clump"],
-                                usepercents=config["percents"],
-                                colormode=config["color"])) + "'>\n"
-        out += colorinfotext(config["color"], config["percents"])
-    else:
-        out += str(graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + '">\n'
+    out = GenerateGraphHTML(net, config["header"], fname, xaxis, yaxis, config["add-data"], config["color"],
+                            config["clump"], config["percents"], reportinfo.usedpredictability)
     if reportinfo.totalaccuracy is None:
         reportinfo.totalaccuracy = ge.Test_Obj(net, data["data"], config["comparison-mode"]) * 100 /len(data["data"])
     localscore = best*100 / len(data["data"])
     out += ("<p>This gets " + str(round(localscore, 2)) + "% of the data items correct." +
             "This is " + str(round(localscore * 100 / reportinfo.totalaccuracy, 2)) + "% of the max accuracy.</p>\n")
-    if len(reportinfo.usedpredictability) > 0:
-        out += "<p>Ignored variables: " + ', '.join(reportinfo.usedpredictability) + "</p>\n"
     reportinfo.usedpredictability.append(xaxis)
     reportinfo.usedpredictability.append(yaxis)
     return out
@@ -505,18 +492,8 @@ def GenerateNonLinearVarianceGraph(net, data, config, directory, fname):
         pyplot.show()
     fig.savefig(directory + '/' + fname, bbox_inches='tight')
     pyplot.close(fig)
-    out = "<h3>" + config["header"] + "</h3>\n"
-    out += '<img src="' + fname + '" onclick="alertjson(this);"' + " class='"
-    if config["add-data"]:
-        out += str(graphcommand(net, reportinfo.netfile, True, xaxis, yaxis,
-                                datafile=reportinfo.datafile, clump=config["clump"],
-                                usepercents=config["percents"],
-                                colormode=config["color"])) + "'>\n"
-        out += colorinfotext(config["color"], config["percents"])
-    else:
-        out += str(graphcommand(net, reportinfo.netfile, False, xaxis, yaxis)) + "'>\n"
-    if len(reportinfo.nonlinear) > 0:
-        out += "<p>Ignored variables: " + ', '.join(reportinfo.nonlinear) + "</p>\n"
+    out = GenerateGraphHTML(net, config["header"], fname, xaxis, yaxis, config["add-data"], config["color"],
+                            config["clump"], config["percents"], reportinfo.nonlinear)
     reportinfo.nonlinear.append(xaxis)
     reportinfo.nonlinear.append(yaxis)
     return out + bonustext

@@ -17,8 +17,7 @@ elif mode == "Analyze":
 
 elif mode == "Interactive":
     import InteractiveGrapher
-    #net = str(input("File name: "))
-    net = 'testnet'
+    net = str(input("File name: "))
     InteractiveGrapher.graph(net)
 
 elif mode == "Report":
