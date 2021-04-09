@@ -3,12 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>MachineLearning Report</title>
+<style>div {border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px} </style>
+<script>function alertjson(item) { alert(item.className); } </script>
 </head>
 <body>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h1>Neural Net Report</h1>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>Net Info</h3>
 <p>Net has 7 inputs.</p>
 <ul>
@@ -26,47 +28,42 @@
 </ul>
 <p>Net is 2 wide by 10 deep.</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>Training Data Info</h3>
 <p>Data file has 891 lines.<p>We correctly predict 79.237% of these.</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>Data Predictability Graph</h3>
-<img src="3img.png"</img>
+<img src="3img.png">
 <p>Color mode is based on point output in data file. Blue is 1, orange is 0.</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>High Variance Graph</h3>
-<img src="4img.png"</img>
-<p style="font-size: 10px">{"net-file": "testnet", "use-data": true, "xaxis": "Gender", "yaxis": "Fare", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "var-error"}</p>
-<p>Points that these variables get wrong (compared to the full net) are highlighted in orange</p>
+<img src="4img.png" onclick="alertjson(this);" class='{"net-file": "testnet", "use-data": true, "xaxis": "Gender", "yaxis": "Fare", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "score"}'>
+<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>High Variance Graph</h3>
-<img src="5img.png"</img>
-<p style="font-size: 10px">{"net-file": "testnet", "use-data": true, "xaxis": "SibSp", "yaxis": "Age", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "var-error"}</p>
-<p>Points that these variables get wrong (compared to the full net) are highlighted in orange</p>
+<img src="5img.png" onclick="alertjson(this);" class='{"net-file": "testnet", "use-data": true, "xaxis": "SibSp", "yaxis": "Age", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "score"}'>
+<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>
 <p>Ignored variables: Gender, Fare</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>High Prediction Graph</h3>
-<img src="6img.png"</img>
-<p style="font-size: 10px">{"net-file": "testnet", "use-data": true, "xaxis": "Gender", "yaxis": "Fare", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "var-error"}</p>
-<p>Points that these variables get wrong (compared to the full net) are highlighted in orange</p>
+<img src="6img.png" onclick="alertjson(this);" class='{"net-file": "testnet", "use-data": true, "xaxis": "Gender", "yaxis": "Fare", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "score"}'>
+<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>
 <p>This gets 78.68% of the data items correct.This is 99.29% of the max accuracy.</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>High Prediction Graph</h3>
-<img src="7img.png"</img>
-<p style="font-size: 10px">{"net-file": "testnet", "use-data": true, "xaxis": "Embarked", "yaxis": "Age", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "var-error"}</p>
-<p>Points that these variables get wrong (compared to the full net) are highlighted in orange</p>
+<img src="7img.png" onclick="alertjson(this);" class='{"net-file": "testnet", "use-data": true, "xaxis": "Embarked", "yaxis": "Age", "zaxis": "Output", "data-file": "titanic.json", "clump": true, "usepercents": false, "color-mode": "score"}'>
+<p>Color mode is based on point value vs net output given those input variables. Blue is 1, orange is 0.</p>
 <p>This gets 61.73% of the data items correct.This is 77.9% of the max accuracy.</p>
 <p>Ignored variables: Gender, Fare</p>
 </div>
-<div style="border: 2px;border-color: black;border-radius: 5px;border-style: solid; padding-left: 10px; margin-bottom: 5px">
+<div>
 <h3>Non-Linear Variance Graph</h3>
-<img src="8img.png"</img>
-<p style="font-size: 10px">{"net-file": "testnet", "use-data": false, "xaxis": "Parch", "yaxis": "Embarked", "zaxis": "Output"}</p>
+<img src="8img.png" onclick="alertjson(this);" class='{"net-file": "testnet", "use-data": false, "xaxis": "Parch", "yaxis": "Embarked", "zaxis": "Output"}'>
 <p>Only one non-linear input (Parch). We picked a second input with similar variance.</p>
 </div>
 </body>
