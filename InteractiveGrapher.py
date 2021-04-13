@@ -12,7 +12,6 @@ colors = grapher.colors
 colormodes = ['none', 'data-file', 'score', 'net-score', 'var-error']
 
 def creategraph(fig, net, inputdict, outputdict, title, defvalue=0, data=None, percents=False, colormode=0, clump=False):
-    #TODO - outputdict
     #we can assume that inputs = 2, and outputs > 1:
     #region scan inputs and outputs
     xaxis = ""
