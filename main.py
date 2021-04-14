@@ -1,4 +1,4 @@
-mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template/Graph: "))
+mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template/Graph/Animate/3D: "))
 
 if mode == "Net":
     #Net demo
@@ -34,6 +34,13 @@ elif mode == "Graph":
     config = json.loads(input("Enter graph command: "))
     g.Graph(config)
 
+elif mode == "Animate":
+    import AnimatedGraphing as ag
+    ag.animate()
+
+elif mode == "3D":
+    import Graph3D
+    Graph3D.run()
 
 elif mode == "CreateEmptyNet":
     #Saves an empty net to a file
