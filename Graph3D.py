@@ -4,11 +4,11 @@ import PythonExtended.Graphing as graph
 import PythonExtended.Math as m
 
 #CONFIG
-gradconfig = True
-config_hidemid = True
-#config = "all"
+gradconfig = False
+config_hidemid = False
+config = "all"
 #config = "onlyblue"
-config = "onlyorange"
+#config = "onlyorange"
 #config = "edge"
 #config = "plane"
 
@@ -93,6 +93,7 @@ class GraphManager:
         self.zvals = []
         self.colorvals = []
 
+
         self.minv = 0
         self.maxv = 0
 
@@ -164,17 +165,19 @@ class GraphManager:
         self.plt.set_xlim(-1,1)
         self.plt.set_ylim(-1,1)
         self.plt.set_zlim(-1,1)
-        graph.Graph3D(self.xvals, self.yvals, self.zvals,
-                      self.colorvals, self.xaxis, self.yaxis, self.zaxis, "Classification Edge", plt=self.plt)
+        graph.Graph3D(self.xvals, self.yvals, self.zvals, self.colorvals,
+                      self.xaxis, self.yaxis, self.zaxis, title = "Classification Edge", plt=self.plt)
+
+
 
 
 def run():
     netfile = 'testnet'
     net = gn.loadNets(netfile)[0][0]
 
-    xaxis = "Gender"
-    yaxis = "Age"
-    zaxis = "Fare"
+    xaxis = "Embarcked"
+    yaxis = "Parch"
+    zaxis = "Age"
     fig = pyplot.figure()
     plt = fig.add_subplot(111, projection='3d')
     #GraphNet(net, xaxis, yaxis, zaxis, plt)

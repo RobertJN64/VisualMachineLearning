@@ -83,9 +83,9 @@ def animate():
     netfile = 'testnet'
     net = gn.loadNets(netfile)[0][0]
 
-    xaxis = "Embarked"
-    yaxis = "Age"
-    animaxis = "Parch"
+    xaxis = "Fare"
+    yaxis = "Parch"
+    animaxis = "Age"
 
     anim = animObject(net, xaxis, yaxis, animaxis)
 
