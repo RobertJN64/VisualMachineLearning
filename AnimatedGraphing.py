@@ -1,8 +1,6 @@
 from MachineLearning import GeneticNets as gn
 import matplotlib.pyplot as pyplot
 import PythonExtended.Graphing as graph
-#import MachineLearning.Graphing as g
-from time import sleep
 
 class animObject:
     def __init__(self, net, xaxis, yaxis, animaxis):
@@ -97,7 +95,7 @@ def animate():
         if animstage > 1:
             animstage = -1
 
-        anim.graph(animstage)
-        #sleep(0.1)
-
-
+        if pyplot.get_fignums():
+            anim.graph(animstage)
+        else:
+            break
