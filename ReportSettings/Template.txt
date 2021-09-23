@@ -2,8 +2,10 @@ Header
 Info
 Data
 Data-Predictability-Graph
-High-Variance-Graph | {"add-data": true}
-High-Variance-Graph | {"add-data": true}
+High-Variance-Graph
+High-Variance-Graph
+High-Prediction-Graph
+High-Prediction-Graph
 High-Prediction-Graph
 High-Prediction-Graph
 NonLinear-Variance-Graph

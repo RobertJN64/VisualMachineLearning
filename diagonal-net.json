@@ -127,7 +127,8 @@
                 }
             ],
             "use-bias": true,
-            "use-neat": false
+            "use-neat": false,
+            "classifier-output": "Out"
         }
     ],
     "ver": "1.0"

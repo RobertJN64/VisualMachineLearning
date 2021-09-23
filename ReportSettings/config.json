@@ -1,9 +1,9 @@
 {
-  "net-file": "testnet",
-  "template": "ReportSettings/Template.txt",
-  "data-file": "titanic.json",
-  "use-data": true,
-  "color": "score",
+  "net-file": "DataNets/coup",
+  "template": "ReportSettings/Coup.txt",
+  "data-file": "",
+  "use-data": false,
+  "color": "default",
   "percents": "default",
   "clump": "default"
 }

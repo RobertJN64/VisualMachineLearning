@@ -3,9 +3,6 @@ import MachineLearning.GeneticEvolution as ge
 import NetRenderPro as nr
 
 import pygame
-
-
-#from time import sleep
 import random
 
 #CONFIG
@@ -25,7 +22,7 @@ def getObstacleByType(typeStr):
     info = obstacles[typeStr]
     return info[0], info[1], info[2]
 
-class obstacle:
+class Obstacle:
     global STARTING_POS
     global OBSTACLE_COLOR
 
@@ -68,7 +65,7 @@ class ObstacleDB:
             self.validobstacles.append('flying')
 
         self.newobstacle = self.validobstacles[random.randint(0,len(self.validobstacles)-1)]
-        self.obstaclelist.append(obstacle(self.newobstacle))
+        self.obstaclelist.append(Obstacle(self.newobstacle))
 
     def advanceGame(self):
         self.counter += 1
@@ -77,13 +74,13 @@ class ObstacleDB:
         self.speed += 0.001
 
         self.remove = []
-        for self.obstacle in self.obstaclelist:
-            self.obstacle.pos -= round(self.speed)
-            if self.obstacle.pos <= GAME_RIGHT_X - self.obstacle.width:
-                self.remove.append(self.obstacle)
+        for obstacle in self.obstaclelist:
+            obstacle.pos -= round(self.speed)
+            if obstacle.pos <= GAME_RIGHT_X - obstacle.width:
+                self.remove.append(obstacle)
 
-        for self.obstacle in self.remove:
-            self.obstaclelist.remove(self.obstacle)
+        for obstacle in self.remove:
+            self.obstaclelist.remove(obstacle)
 
         if random.randint(0, self.lastobstacletime) > 75:
             self.lastobstacletime = 0
@@ -91,17 +88,17 @@ class ObstacleDB:
 
     def drawGame(self, screen):
         pygame.draw.rect(screen, (0,255,0), (GAME_RIGHT_X, GAME_BOTTOM_Y, GAME_LEFT_X-GAME_RIGHT_X, 10))
-        for self.obstacle in self.obstaclelist:
-            self.obstacle.draw(screen)
+        for obstacle in self.obstaclelist:
+            obstacle.draw(screen)
 
     def getNextObstacle(self, xpos):
         if len(self.obstaclelist) > 0:
-            for self.obstacle in self.obstaclelist:
-                if self.obstacle.pos > xpos - 50:
-                    return self.obstacle
-            return obstacle('blank')
+            for obstacle in self.obstaclelist:
+                if obstacle.pos > xpos - 50:
+                    return obstacle
+            return Obstacle('blank')
         else:
-            return obstacle('blank')
+            return Obstacle('blank')
 
 def getPlayersFromNets(NetDB):
     Players = []
@@ -260,7 +257,7 @@ def run():
 
     speed = True
     done = False
-    evoRate = 3
+    evoRate = 5 #3
     Generation = 0
     while not done:
         alldead = False
@@ -305,8 +302,10 @@ def run():
 
         NetDB = playerDB.getNetDB()
         NetDB = ge.evolve(NetDB, evoRate)
-        evoRate = 0.95 * evoRate
+        #evoRate = 0.95 * evoRate
 
-    fname = str(input("Save net?"))
+    pygame.quit()
+    fname = str(input("Save net? "))
     if fname != "":
         gn.saveNets([NetDB[0][0]], fname, "GA Demo", 1.0)
+

@@ -179,7 +179,7 @@ def graph(fname):
         if dataButton.updated:
             if dataButton.state:
                 file = net.datafile
-                if file is None:
+                if file is None or file == "":
                     file = input("Data source file: ")
                 with open(file) as f:
                     data = json.load(f)

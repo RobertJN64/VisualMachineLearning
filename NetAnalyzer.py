@@ -114,7 +114,7 @@ def analyze(fname, fnameout = None):
         data = data["data"]
 
     while True:
-        mode = str(input("2D/3D: "))
+        mode = str(input("2D/3D (hit enter to exit): "))
 
         if mode == "":
             break
