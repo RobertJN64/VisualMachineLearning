@@ -1,17 +1,18 @@
 from MachineLearning import GeneticNets as gn
-import matplotlib.pyplot as pyplot
 import PythonExtended.Graphing as graph
+import TKinterModernThemes as TKMT
+import tkinter as tk
 
 class animObject:
-    def __init__(self, net, xaxis, yaxis, animaxis):
+    def __init__(self, ax, net, xaxis, yaxis, animaxis):
         self.xaxis = xaxis
         self.yaxis = yaxis
         self.animaxis = animaxis
         self.zaxis = ' & '.join(net.outputs)
-        self.xs = {}
-        self.ys = {}
-        self.zs = {}
-        self.cs = {}
+        self.xs = []
+        self.ys = []
+        self.zs = []
+        self.cs = []
 
         a = -1
         while a < 1:
@@ -47,55 +48,86 @@ class animObject:
 
                     y += 0.1
                 x += 0.1
-                self.xs[a] = xvals
-                self.ys[a] = yvals
-                self.zs[a] = zvals
-                self.cs[a] = colorvals
+            self.xs.append(xvals)
+            self.ys.append(yvals)
+            self.zs.append(zvals)
+            self.cs.append(colorvals)
             a += 0.1
 
         maxvs = []
         minvs = []
-        for stage in self.zs:
-            vals = self.zs[stage]
+        for vals in self.zs:
             maxvs.append(max(vals))
             minvs.append(min(vals))
         self.zmax = max(maxvs)
         self.zmin = min(minvs)
 
-        pyplot.ion()
-        self.fig = pyplot.figure()
-        self.plt = self.fig.add_subplot(111, projection='3d')
-
-        pyplot.show()
+        self.ax = ax
 
     def graph(self, stage):
-        pyplot.cla()
-        self.plt.set_zlim([self.zmin, self.zmax])
+        self.ax.clear()
+        self.ax.set_zlim([self.zmin, self.zmax])
         graph.Graph3D(self.xs[stage], self.ys[stage], self.zs[stage],
                       self.cs[stage], self.xaxis, self.yaxis, self.zaxis,
-                      self.animaxis + ": " + str(round(stage,1)), plt=self.plt)
-        self.fig.canvas.flush_events()
+                      self.animaxis + ": " + str(round(stage,1)), plt=self.ax)
 
+class App(TKMT.ThemedTKinterFrame):
+    def __init__(self, net):
+        super().__init__("Net File Animation")
+        self.net = net
 
-def animate():
-    netfile = 'testnet'
-    net = gn.loadNets(netfile)[0][0]
+        self.animobject = None
 
-    xaxis = "Fare"
-    yaxis = "Parch"
-    animaxis = "Age"
+        graphframe = self.addLabelFrame("Graph")
+        data = graphframe.matplotlibFrame("Matplotlib Frame", projection='3d')
+        self.canvas, fig, self.ax, backgroundcolor, accentcolor = data
+        configframe = self.addLabelFrame("Configuration", col=1)
 
-    anim = animObject(net, xaxis, yaxis, animaxis)
+        self.menuoptions = ["Pick an option"] + list(net.inputs.keys())
+        self.xaxisvar = tk.StringVar(value=self.menuoptions[0])
+        self.yaxisvar = tk.StringVar(value=self.menuoptions[0])
+        self.timeaxisvar = tk.StringVar(value=self.menuoptions[0])
 
-    animstage = -1
+        configframe.Label("X axis:")
+        configframe.Label("Y axis:")
+        configframe.Label("Time axis:")
+        configframe.setActiveCol(1)
+        configframe.OptionMenu(self.menuoptions, self.xaxisvar, self.updateAxis)
+        configframe.OptionMenu(self.menuoptions, self.yaxisvar, self.updateAxis)
+        configframe.OptionMenu(self.menuoptions, self.timeaxisvar, self.updateAxis)
+        #self.debugPrint()
 
+        configframe.setActiveCol(0)
+        self.scrollvar = tk.IntVar(value=11)
+        self.scrollvar.trace_add('write', self.updateGraph)
+        self.scale = configframe.Scale(0, 20, self.scrollvar, colspan=2)
 
-    while True:
-        animstage += 0.1
-        if animstage > 1:
-            animstage = -1
+        self.switchvar = tk.BooleanVar(value=True)
+        configframe.SlideSwitch("AutoScroll", self.switchvar)
+        self.root.after(250, self.advanceAnimation)
+        self.run()
 
-        if pyplot.get_fignums():
-            anim.graph(animstage)
+    def updateAxis(self, _):
+        for var in [self.xaxisvar, self.yaxisvar, self.timeaxisvar]:
+            if var.get() == self.menuoptions[0]:
+                break
         else:
-            break
+            self.animobject = animObject(self.ax, self.net, self.xaxisvar.get(), self.yaxisvar.get(),
+                                         self.timeaxisvar.get())
+            self.animobject.graph(0)
+            self.canvas.draw()
+
+    def updateGraph(self, _, __, ___):
+        if self.animobject is not None:
+            self.animobject.graph(self.scrollvar.get())
+            self.canvas.draw()
+
+    def advanceAnimation(self):
+        if self.switchvar.get() and self.animobject is not None:
+            self.scrollvar.set((self.scrollvar.get() + 1)%21)
+        self.root.after(250, self.advanceAnimation)
+
+
+def animate(netfile):
+    net = gn.loadNets(netfile)[0][0]
+    App(net)

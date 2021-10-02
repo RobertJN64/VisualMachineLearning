@@ -1,58 +1,49 @@
 import TKinterModernThemes as TKMT
-from tkinter import ttk
 from tkinter import filedialog
 
 class App(TKMT.ThemedTKinterFrame):
     def __init__(self):
         super().__init__("Visual Machine Learning")
+        programs = [["Net Demo", netDemo], ["Genetic Algorithm Demo", genetic], ["Net Analyzer", self.netAnalyzer],
+                    ["Interactive Grapher", self.interactiveGrapher], ["Create Report", createReport],
+                    ["Create Report Template", createReportTemplate], ["Graph Animation", self.animatedGrapher],
+                    ["Graph 3D", graph3D]]
 
-        button_frame = ttk.LabelFrame(self, text="Programs", padding=(20, 20))
-        button_frame.grid(row=0, column=0, padx=(20, 20), pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Net Demo", command=netDemo)
-        button.grid(row=0, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Genetic Algorithm Demo", command=genetic)
-        button.grid(row=1, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Net Analyzer", command=self.netAnalyzer)
-        button.grid(row=2, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Interactive Grapher", command=self.interactiveGrapher)
-        button.grid(row=3, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Create Report", command=createReport)
-        button.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Create Report Template", command=createReportTemplate)
-        button.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Graph Animation", command=animate)
-        button.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
-
-        button = ttk.Button(button_frame, text="Graph 3D", command=graph3D)
-        button.grid(row=7, column=0, padx=5, pady=10, sticky="nsew")
+        button_frame = self.addLabelFrame("Programs")
+        for name, program in programs:
+            button_frame.Button(name, program)
 
         self.run()
 
-    def netAnalyzer(self):
-        fname = filedialog.askopenfilename(parent=self, title="Choose a net file.", initialdir=__file__+"/..",
-                                           filetypes=[("Net Files", "*.json")])
+    def openFile(self, title, filetypes=None):
+        if filetypes is None:
+            filetypes = [("Net Files", "*.json")]
+        fname = filedialog.askopenfilename(parent=self.master, title=title, initialdir=__file__ + "/..", filetypes=filetypes)
         if fname is not None:
             fname = fname.strip('.json')
+        return fname
+
+
+    def netAnalyzer(self):
+        fname = self.openFile("Choose a net file")
+        if fname is not None:
             import NetAnalyzer
             NetAnalyzer.analyze(fname)
 
     def interactiveGrapher(self):
-        fname = filedialog.askopenfilename(parent=self, title="Choose a net file.", initialdir=__file__ + "/..",
-                                           filetypes=[("Net Files", "*.json")])
+        fname = self.openFile("Choose a net file")
         if fname is not None:
-            fname = fname.strip('.json')
             import InteractiveGrapher
             InteractiveGrapher.graph(fname)
 
+    def animatedGrapher(self):
+        fname = self.openFile("Choose a net file")
+        if fname is not None:
+            import AnimatedGraphing as ag
+            ag.animate(fname)
 
 
+#region new launchers
 def netDemo():
     import NetDemo
     NetDemo.run()
@@ -69,14 +60,10 @@ def createReportTemplate():
     import ReportCreatingAssist as r
     r.run()
 
-def animate():
-    import AnimatedGraphing as ag
-    ag.animate()
-
 def graph3D():
     import Graph3D
     Graph3D.run()
-
+#endregion
 
 def old():
     mode = str(input("Net/Genetic/Analyze/Interactive/Report/Template/Graph/Animate/3D: "))
@@ -128,5 +115,6 @@ def old():
             print("ERROR! Activation function not found")
 
         EmptyNetCreator.create(file, inputLen, outputLen, midWidth, midDepth, useBias, useNeat, activation_func, fin_activation_func)
+
 
 App()
