@@ -307,5 +307,5 @@ def run():
     pygame.quit()
     fname = str(input("Save net? "))
     if fname != "":
-        gn.saveNets([NetDB[0][0]], fname, "GA Demo", 1.0)
+        gn.saveNets([NetDB[0][0]], fname, "GA Demo", 1.0) #TODO - better save
 

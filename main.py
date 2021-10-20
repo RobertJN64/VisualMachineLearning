@@ -1,5 +1,6 @@
 import TKinterModernThemes as TKMT
 from tkinter import filedialog
+import math
 
 class App(TKMT.ThemedTKinterFrame):
     def __init__(self):
@@ -10,8 +11,9 @@ class App(TKMT.ThemedTKinterFrame):
                     ["Graph 3D", graph3D], ["Empty Net Creator", emptyNetCreator]]
 
         button_frame = self.addLabelFrame("Programs")
-        for name, program in programs:
-            button_frame.Button(name, program)
+        for i in range(0, len(programs)):
+            name, program = programs[i]
+            button_frame.Button(name, program, col=math.ceil((i+1)*2/(len(programs)+1)))
 
         self.run()
 
@@ -54,7 +56,7 @@ def genetic():
 
 def createReport():
     import ReportGenerator as rg
-    rg.GenerateReport() #TODO
+    rg.GenerateReport()
 
 def createReportTemplate():
     import ReportCreatingAssist as r
